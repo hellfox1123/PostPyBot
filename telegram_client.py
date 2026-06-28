@@ -1,8 +1,9 @@
 import asyncio
 import os
 from telethon import TelegramClient
+from telethon.sessions import StringSession
 from telethon.errors import SessionPasswordNeededError
-from config import API_ID, API_HASH, SESSION_PATH, ADMIN_ID
+from config import API_ID, API_HASH, STRING_SESSION, ADMIN_ID
 from utils import logger
 
 class TelegramUserClient:
@@ -14,30 +15,25 @@ class TelegramUserClient:
         self.bot = None
     
     async def init(self, bot=None):
-        """Ініціалізація клієнта з детальною діагностикою"""
+        """Ініціалізація клієнта з StringSession"""
         self.bot = bot
         
-        session_file = f"{SESSION_PATH}.session"
+        if not STRING_SESSION:
+            logger.error("❌ STRING_SESSION не встановлено")
+            return False
+        
         logger.info(f"=== ДІАГНОСТИКА ===")
         logger.info(f"API_ID: {API_ID}")
         logger.info(f"API_HASH: {API_HASH[:10]}...")
-        logger.info(f"SESSION_PATH: {SESSION_PATH}")
-        logger.info(f"Файл: {session_file}")
+        logger.info(f"STRING_SESSION: {STRING_SESSION[:20]}... (довжина: {len(STRING_SESSION)})")
         
-        if not os.path.exists(session_file):
-            logger.error(f"❌ Файл НЕ знайдено!")
-            return False
-        
-        file_size = os.path.getsize(session_file)
-        logger.info(f"✅ Файл знайдено ({file_size} байт)")
-        
-        self.client = TelegramClient(SESSION_PATH, API_ID, API_HASH)
+        # Використовуємо StringSession замість файлу
+        self.client = TelegramClient(StringSession(STRING_SESSION), API_ID, API_HASH)
         
         try:
             await self.client.connect()
             logger.info("✅ Підключено до Telegram серверів")
             
-            # Спробуємо отримати дані користувача
             try:
                 me = await self.client.get_me()
                 logger.info(f"✅ АВТОРИЗОВАНО як @{me.username} (ID: {me.id})")
@@ -67,19 +63,12 @@ class TelegramUserClient:
         """Перевірка коду або пароля"""
         try:
             if password:
-                await self.client.sign_in(
-                    phone=phone,
-                    password=password
-                )
+                await self.client.sign_in(phone=phone, password=password)
             else:
-                await self.client.sign_in(
-                    phone=phone,
-                    code=code,
-                    phone_code_hash=self.phone_hash
-                )
+                await self.client.sign_in(phone=phone, code=code, phone_code_hash=self.phone_hash)
             
             self.auth_pending = False
-            logger.info("Telethon клієнт успішно авторизовано ✅")
+            logger.info("✅ Telethon клієнт успішно авторизовано")
             return True
         
         except SessionPasswordNeededError:
@@ -94,13 +83,10 @@ class TelegramUserClient:
         """Отримання постів з каналу"""
         try:
             entity = await self.client.get_entity(channel)
-            
             messages = []
             async for message in self.client.iter_messages(entity, limit=limit):
                 messages.append(message)
-            
             return messages
-        
         except Exception as e:
             logger.error(f"Помилка отримання постів: {e}")
             return []
@@ -117,7 +103,6 @@ class TelegramUserClient:
                 return messages[0]
             
             return None
-        
         except Exception as e:
             logger.error(f"Помилка отримання поста {message_id}: {e}")
             return None
@@ -127,10 +112,8 @@ class TelegramUserClient:
         try:
             if not message.media:
                 return None
-            
             media_bytes = await self.client.download_media(message, bytes)
             return media_bytes
-        
         except Exception as e:
             logger.error(f"Помилка завантаження медіа: {e}")
             return None
