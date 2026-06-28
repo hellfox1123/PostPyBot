@@ -15,9 +15,8 @@ ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 SOURCE_CHANNEL = os.getenv("SOURCE_CHANNEL", "")
 TARGET_CHANNEL_ID = int(os.getenv("TARGET_CHANNEL_ID", "0"))
 
-# Paths
+# Database
 DATABASE_PATH = os.getenv("DATABASE_PATH", "xposter.db")
-SESSION_PATH = os.getenv("SESSION_PATH", "telegram_session")
 
 # Defaults
 DEFAULT_INTERVAL_MINUTES = int(os.getenv("DEFAULT_INTERVAL_MINUTES", "60"))
