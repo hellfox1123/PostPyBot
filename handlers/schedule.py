@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from database import db
@@ -14,7 +14,6 @@ class ScheduleStates(StatesGroup):
 
 @router.callback_query(F.data == "menu_schedule")
 async def callback_schedule_menu(callback: CallbackQuery):
-    """Меню розкладу"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -42,24 +41,22 @@ async def callback_schedule_menu(callback: CallbackQuery):
         f"Оберіть що змінити:"
     )
     
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🕐 Змінити години", callback_data="schedule_hours")],
         [InlineKeyboardButton(text="📋 Змінити дні", callback_data="schedule_days")],
         [InlineKeyboardButton(text="◀️ Назад", callback_data="menu_main")]
     ])
     
-    await callback.message.edit_message_text(text, reply_markup=keyboard)
+    await callback.message.edit_text(text, reply_markup=keyboard)
     await callback.answer()
 
 @router.callback_query(F.data == "schedule_hours")
 async def callback_schedule_hours(callback: CallbackQuery, state: FSMContext):
-    """Зміна годин"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
     
-    await callback.message.edit_message_text(
+    await callback.message.edit_text(
         "✏️ Введіть години активності у форматі:\n"
         "початок-кінець\n\n"
         "Приклади:\n"
@@ -73,7 +70,6 @@ async def callback_schedule_hours(callback: CallbackQuery, state: FSMContext):
 
 @router.message(ScheduleStates.waiting_for_hours)
 async def process_schedule_hours(message: Message, state: FSMContext):
-    """Обробка годин"""
     if message.from_user.id != ADMIN_ID:
         return
     
@@ -103,12 +99,11 @@ async def process_schedule_hours(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "schedule_days")
 async def callback_schedule_days(callback: CallbackQuery, state: FSMContext):
-    """Зміна днів"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
     
-    await callback.message.edit_message_text(
+    await callback.message.edit_text(
         "✏️ Введіть дні тижня через кому:\n\n"
         "1 = Понеділок\n"
         "2 = Вівторок\n"
@@ -128,7 +123,6 @@ async def callback_schedule_days(callback: CallbackQuery, state: FSMContext):
 
 @router.message(ScheduleStates.waiting_for_days)
 async def process_schedule_days(message: Message, state: FSMContext):
-    """Обробка днів"""
     if message.from_user.id != ADMIN_ID:
         return
     
