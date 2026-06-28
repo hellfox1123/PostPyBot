@@ -1,6 +1,6 @@
 import os
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, Message, FSInputFile
+from aiogram.types import CallbackQuery, FSInputFile
 from database import db
 from keyboards import get_service_menu, get_confirm_keyboard, get_back_button
 from config import ADMIN_ID, DATABASE_PATH
@@ -10,7 +10,6 @@ router = Router()
 
 @router.callback_query(F.data == "menu_service")
 async def callback_service_menu(callback: CallbackQuery):
-    """Меню сервісу"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -21,12 +20,11 @@ async def callback_service_menu(callback: CallbackQuery):
     
     keyboard = get_service_menu(test_mode)
     
-    await callback.message.edit_message_text(text, reply_markup=keyboard)
+    await callback.message.edit_text(text, reply_markup=keyboard)
     await callback.answer()
 
 @router.callback_query(F.data == "service_toggle_test")
 async def callback_toggle_test(callback: CallbackQuery):
-    """Перемикач тестового режиму"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -41,7 +39,6 @@ async def callback_toggle_test(callback: CallbackQuery):
 
 @router.callback_query(F.data == "service_export")
 async def callback_export(callback: CallbackQuery):
-    """Експорт бази"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -59,12 +56,11 @@ async def callback_export(callback: CallbackQuery):
 
 @router.callback_query(F.data == "service_import")
 async def callback_import(callback: CallbackQuery):
-    """Імпорт бази"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
     
-    await callback.message.edit_message_text(
+    await callback.message.edit_text(
         "📥 Надішліть файл бази даних (.db)",
         reply_markup=get_back_button("menu_service")
     )
@@ -72,12 +68,11 @@ async def callback_import(callback: CallbackQuery):
 
 @router.callback_query(F.data == "service_clear")
 async def callback_clear(callback: CallbackQuery):
-    """Очищення історії"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
     
-    await callback.message.edit_message_text(
+    await callback.message.edit_text(
         "⚠️ Ви впевнені що хочете очистити всю історію опублікованих постів?\n\n"
         "Це не можна скасувати!",
         reply_markup=get_confirm_keyboard("clear_history")
@@ -86,7 +81,6 @@ async def callback_clear(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("confirm_yes:"))
 async def callback_confirm_yes(callback: CallbackQuery):
-    """Підтвердження дії"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -95,7 +89,7 @@ async def callback_confirm_yes(callback: CallbackQuery):
     
     if action == "clear_history":
         await db.clear_all_data()
-        await callback.message.edit_message_text(
+        await callback.message.edit_text(
             "✅ Історію очищено",
             reply_markup=get_back_button("menu_service")
         )
@@ -104,7 +98,6 @@ async def callback_confirm_yes(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("confirm_no:"))
 async def callback_confirm_no(callback: CallbackQuery):
-    """Скасування дії"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -114,7 +107,6 @@ async def callback_confirm_no(callback: CallbackQuery):
 
 @router.callback_query(F.data == "service_logs")
 async def callback_logs(callback: CallbackQuery):
-    """Надсилання логів"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -123,7 +115,7 @@ async def callback_logs(callback: CallbackQuery):
         log_path = "/app/data/bot.log"
         if os.path.exists(log_path):
             file = FSInputFile(log_path)
-            await callback.message.answer_document(file, caption="📋 Логи бота")
+            await callback.message.answer_document(file, caption=" Логи бота")
             await callback.answer("✅ Логи надіслано")
         else:
             await callback.answer("❌ Файл логів не знайдено")
