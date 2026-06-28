@@ -33,16 +33,7 @@ async def main():
     # Ініціалізуємо Telethon клієнт
     is_authorized = await telegram_client.init(bot)
     
-    if not is_authorized:
-        logger.warning("Telethon не авторизовано. Використайте команду /auth")
-        await send_admin_notification(
-            bot,
-            "⚠️ Telethon не авторизовано!\n\n"
-            "Використайте команду /auth для авторизації."
-        )
-    
     # Ініціалізуємо Poster
-    global poster
     from poster import poster as poster_instance
     poster_instance = Poster(bot)
     
@@ -60,15 +51,27 @@ async def main():
     dp.include_router(service.router)
     dp.include_router(actions.router)
     
-    # Створюємо та запускаємо планувальник
+    # Створюємо планувальник
     global scheduler
     scheduler = Scheduler(bot)
     
     if is_authorized:
         await scheduler.start()
-        logger.info("Бот запущено")
+        logger.info("✅ Бот запущено і готовий до роботи")
+        await send_admin_notification(
+            bot,
+            "✅ <b>Бот запущено!</b>\n\n"
+            "Telethon авторизовано, планувальник працює.",
+            parse_mode="HTML"
+        )
     else:
-        logger.warning("Бот запущено в режимі очікування авторизації")
+        logger.warning("⚠️ Telethon не авторизовано - бот в режимі очікування")
+        await send_admin_notification(
+            bot,
+            "⚠️ <b>Telethon не авторизовано!</b>\n\n"
+            "Використайте команду /auth для авторизації.",
+            parse_mode="HTML"
+        )
     
     # Запускаємо polling
     try:
