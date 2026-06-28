@@ -10,6 +10,7 @@ from config import BOT_TOKEN, DATABASE_PATH
 from database import db
 from telegram_client import telegram_client
 from scheduler import Scheduler
+import poster as poster_module
 from poster import Poster
 from handlers import start, interval, caption, mode, schedule, service, actions, auth
 from utils import logger, send_admin_notification
@@ -34,9 +35,9 @@ async def main():
     # Ініціалізуємо Telethon клієнт
     is_authorized = await telegram_client.init(bot)
     
-    # Ініціалізуємо Poster
-    from poster import poster as poster_instance
-    poster_instance = Poster(bot)
+    # Ініціалізуємо Poster і зберігаємо в модуль
+    poster_module.poster = Poster(bot)
+    logger.info("Poster ініціалізовано")
     
     # Створюємо диспетчер
     storage = MemoryStorage()
