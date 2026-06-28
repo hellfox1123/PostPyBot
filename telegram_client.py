@@ -17,16 +17,40 @@ class TelegramUserClient:
         """Ініціалізація клієнта"""
         self.bot = bot
         
-        # Використовуємо файл з GitHub
-        session_file = f"{SESSION_PATH}.session"
-        logger.info(f"Шукаю файл сесії: {session_file}")
+        # Детальне логування
+        logger.info(f"=== ДІАГНОСТИКА ФАЙЛУ СЕСІЇ ===")
+        logger.info(f"SESSION_PATH з config: {SESSION_PATH}")
+        logger.info(f"Поточна робоча директорія: {os.getcwd()}")
         
-        if os.path.exists(session_file):
-            file_size = os.path.getsize(session_file)
-            logger.info(f"✅ Файл сесії знайдено, розмір: {file_size} байт")
+        # Перевіряємо різні можливі шляхи
+        possible_paths = [
+            f"{SESSION_PATH}.session",
+            f"/app/{SESSION_PATH}.session",
+            f"/app/data/telegram_session.session",
+            "data/telegram_session.session",
+            "telegram_session.session"
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                file_size = os.path.getsize(path)
+                logger.info(f"✅ ФАЙЛ ЗНАЙДЕНО: {path} ({file_size} байт)")
+            else:
+                logger.info(f"❌ Не знайдено: {path}")
+        
+        # Перевіряємо вміст /app/data/
+        if os.path.exists("/app/data"):
+            logger.info(f"Вміст /app/data/: {os.listdir('/app/data')}")
         else:
-            logger.warning(f"❌ Файл сесії НЕ знайдено: {session_file}")
-            logger.info(f"Поточна директорія: {os.getcwd()}")
+            logger.warning("Папка /app/data/ не існує")
+        
+        # Перевіряємо /app/
+        if os.path.exists("/app"):
+            logger.info(f"Вміст /app/: {os.listdir('/app')}")
+        
+        # Використовуємо SESSION_PATH
+        session_file = f"{SESSION_PATH}.session"
+        logger.info(f"Використовую шлях: {session_file}")
         
         self.client = TelegramClient(SESSION_PATH, API_ID, API_HASH)
         
