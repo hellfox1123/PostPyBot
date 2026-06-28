@@ -19,9 +19,12 @@ async def callback_main_menu(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
-    await show_main_menu(callback.message, callback=True)
+    await show_main_menu(callback)
 
-async def show_main_menu(message_or_callback, callback=False):
+async def show_main_menu(target):
+    """
+    target може бути Message або CallbackQuery
+    """
     is_running = await db.get_setting("is_running", "1") == "1"
     test_mode = await db.get_setting("test_mode", "0") == "1"
     
@@ -29,7 +32,7 @@ async def show_main_menu(message_or_callback, callback=False):
     mode_names = {
         "sequential": "🔢 Послідовно",
         "random": "🎲 Випадково",
-        "randomsmart": " RandomSmart"
+        "randomsmart": "🧠 RandomSmart"
     }
     
     interval = await db.get_setting("interval_minutes", "60")
@@ -41,21 +44,23 @@ async def show_main_menu(message_or_callback, callback=False):
     published_count = await db.get_published_count()
     
     text = (
-        f"🤖 XPoster Bot\n\n"
+        f" XPoster Bot\n\n"
         f"📊 Статус: {'▶️ Працює' if is_running else '⏸ Пауза'}\n"
-        f"📡 Режим: {mode_names.get(mode, mode)}\n"
+        f" Режим: {mode_names.get(mode, mode)}\n"
         f"⏱ Інтервал: {interval_text}\n"
-        f"✍️ Підпис: {caption_text}\n\n"
-        f" Опубліковано: {published_count}"
+        f"️ Підпис: {caption_text}\n\n"
+        f"📈 Опубліковано: {published_count}"
     )
     
     keyboard = get_main_menu(is_running, test_mode)
     
-    if callback:
-        await message_or_callback.edit_text(text, reply_markup=keyboard)
-        await message_or_callback.answer()
+    # Розрізняємо Message і CallbackQuery
+    if isinstance(target, CallbackQuery):
+        await target.message.edit_text(text, reply_markup=keyboard)
+        await target.answer()
     else:
-        await message_or_callback.answer(text, reply_markup=keyboard)
+        # Це Message
+        await target.answer(text, reply_markup=keyboard)
 
 def format_interval(minutes: int) -> str:
     if minutes < 60:
