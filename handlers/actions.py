@@ -12,7 +12,6 @@ router = Router()
 
 @router.callback_query(F.data == "action_toggle")
 async def callback_toggle(callback: CallbackQuery):
-    """Перемикач Старт/Пауза"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -21,22 +20,19 @@ async def callback_toggle(callback: CallbackQuery):
     new_value = "0" if current == "1" else "1"
     await db.set_setting("is_running", new_value)
     
-    # Переналаштовуємо планувальник
     if scheduler:
         await scheduler.reschedule()
     
     status = "▶️ Працює" if new_value == "1" else "⏸ Пауза"
     await callback.answer(f"Статус: {status}")
     
-    # Повертаємось в головне меню
     from .start import callback_main_menu
     await callback_main_menu(callback)
 
 @router.callback_query(F.data == "action_publish_now")
 async def callback_publish_now(callback: CallbackQuery):
-    """Опублікувати зараз"""
     if callback.from_user.id != ADMIN_ID:
-        await callback.answer("⛔ Доступ заборонено")
+        await callback.answer(" Доступ заборонено")
         return
     
     await callback.answer("⏳ Публікація...")
@@ -49,16 +45,12 @@ async def callback_publish_now(callback: CallbackQuery):
 
 @router.callback_query(F.data == "action_ping")
 async def callback_ping(callback: CallbackQuery):
-    """Ping-Pong"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
     
     start_time = time.time()
-    
-    # Імітуємо затримку
     await callback.answer()
-    
     end_time = time.time()
     latency = int((end_time - start_time) * 1000)
     
@@ -72,11 +64,10 @@ async def callback_ping(callback: CallbackQuery):
         f"🕐 Час сервера: {time_str}"
     )
     
-    await callback.message.edit_message_text(text, reply_markup=get_back_button())
+    await callback.message.edit_text(text, reply_markup=get_back_button())
 
 @router.callback_query(F.data == "menu_stats")
 async def callback_stats(callback: CallbackQuery):
-    """Детальна статистика"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -114,7 +105,7 @@ async def callback_stats(callback: CallbackQuery):
         text += f"🧠 N для RandomSmart: {smart_n}\n"
     
     text += f"⏱ Інтервал: {interval} хв\n"
-    text += f"✍️ Підпис: {'[встановлено]' if caption else '[не встановлено]'}"
+    text += f"️ Підпис: {'[встановлено]' if caption else '[не встановлено]'}"
     
-    await callback.message.edit_message_text(text, reply_markup=get_back_button())
+    await callback.message.edit_text(text, reply_markup=get_back_button())
     await callback.answer()
