@@ -13,7 +13,6 @@ class CaptionStates(StatesGroup):
 
 @router.callback_query(F.data == "menu_caption")
 async def callback_caption_menu(callback: CallbackQuery):
-    """Меню підпису"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -31,19 +30,18 @@ async def callback_caption_menu(callback: CallbackQuery):
     
     keyboard = get_caption_menu(has_caption, False)
     
-    await callback.message.edit_message_text(text, reply_markup=keyboard, parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     await callback.answer()
 
 @router.callback_query(F.data == "caption_edit")
 async def callback_edit_caption(callback: CallbackQuery, state: FSMContext):
-    """Редагування підпису"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
     
-    await callback.message.edit_message_text(
+    await callback.message.edit_text(
         "✏️ Надішліть новий підпис:\n\n"
-        "💡 Підтримуються HTML-гіперсилки:\n"
+        " Підтримуються HTML-гіперсилки:\n"
         "<a href=\"https://t.me/channel\">текст</a>",
         reply_markup=get_back_button("menu_caption"),
         parse_mode="HTML"
@@ -53,12 +51,10 @@ async def callback_edit_caption(callback: CallbackQuery, state: FSMContext):
 
 @router.message(CaptionStates.waiting_for_caption)
 async def process_caption(message: Message, state: FSMContext):
-    """Обробка нового підпису"""
     if message.from_user.id != ADMIN_ID:
         return
     
     caption = message.text
-    
     await db.set_setting("caption", caption)
     
     await message.answer(
@@ -70,7 +66,6 @@ async def process_caption(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "caption_remove")
 async def callback_remove_caption(callback: CallbackQuery):
-    """Видалення підпису"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
