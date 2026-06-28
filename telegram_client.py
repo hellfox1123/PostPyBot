@@ -1,4 +1,5 @@
 import asyncio
+import os
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 from config import API_ID, API_HASH, SESSION_PATH, ADMIN_ID
@@ -9,11 +10,25 @@ class TelegramUserClient:
         self.client = None
         self.auth_pending = False
         self.phone_hash = None
-        self.bot = None  # Для відправки запитів коду
+        self.phone = None
+        self.bot = None
     
     async def init(self, bot=None):
         """Ініціалізація клієнта"""
         self.bot = bot
+        
+        # Перевіряємо чи існує файл сесії
+        session_file = f"{SESSION_PATH}.session"
+        logger.info(f"Шукаю файл сесії: {session_file}")
+        
+        if os.path.exists(session_file):
+            file_size = os.path.getsize(session_file)
+            logger.info(f"Файл сесії знайдено, розмір: {file_size} байт")
+        else:
+            logger.warning(f"Файл сесії НЕ знайдено: {session_file}")
+            logger.info(f"Поточна директорія: {os.getcwd()}")
+            logger.info(f"Вміст /app/data/: {os.listdir('/app/data') if os.path.exists('/app/data') else 'папка не існує'}")
+        
         self.client = TelegramClient(SESSION_PATH, API_ID, API_HASH)
         
         try:
@@ -29,7 +44,7 @@ class TelegramUserClient:
         except Exception as e:
             logger.error(f"Помилка ініціалізації Telethon: {e}")
             return False
-    
+        
     async def start_auth(self, phone: str):
         """Початок авторизації"""
         try:
