@@ -13,7 +13,6 @@ class SmartNStates(StatesGroup):
 
 @router.callback_query(F.data == "menu_mode")
 async def callback_mode_menu(callback: CallbackQuery):
-    """Меню режиму"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -22,12 +21,11 @@ async def callback_mode_menu(callback: CallbackQuery):
     text = f"🎛 Оберіть режим постингу:\n\nПоточний: {get_mode_name(current_mode)}"
     keyboard = get_mode_menu(current_mode)
     
-    await callback.message.edit_message_text(text, reply_markup=keyboard)
+    await callback.message.edit_text(text, reply_markup=keyboard)
     await callback.answer()
 
 @router.callback_query(F.data.startswith("mode_set:"))
 async def callback_set_mode(callback: CallbackQuery):
-    """Встановлення режиму"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -40,7 +38,6 @@ async def callback_set_mode(callback: CallbackQuery):
 
 @router.callback_query(F.data == "mode_smart_settings")
 async def callback_smart_settings(callback: CallbackQuery):
-    """Налаштування RandomSmart"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
@@ -49,14 +46,13 @@ async def callback_smart_settings(callback: CallbackQuery):
     text = f"🧠 RandomSmart налаштування\n\nКількість останніх постів, які не повторюватимуться:\nПоточне значення: {current_n}"
     keyboard = get_smart_n_menu(current_n)
     
-    await callback.message.edit_message_text(text, reply_markup=keyboard)
+    await callback.message.edit_text(text, reply_markup=keyboard)
     await callback.answer()
 
 @router.callback_query(F.data.startswith("smart_n:"))
 async def callback_set_smart_n(callback: CallbackQuery):
-    """Встановлення N для RandomSmart"""
     if callback.from_user.id != ADMIN_ID:
-        await callback.answer("⛔ Доступ заборонено")
+        await callback.answer(" Доступ заборонено")
         return
     
     n = int(callback.data.split(":")[1])
@@ -67,12 +63,11 @@ async def callback_set_smart_n(callback: CallbackQuery):
 
 @router.callback_query(F.data == "smart_n_custom")
 async def callback_custom_smart_n(callback: CallbackQuery, state: FSMContext):
-    """Введення свого N"""
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("⛔ Доступ заборонено")
         return
     
-    await callback.message.edit_message_text(
+    await callback.message.edit_text(
         "✏️ Введіть число (кількість постів):",
         reply_markup=get_back_button("mode_smart_settings")
     )
@@ -81,7 +76,6 @@ async def callback_custom_smart_n(callback: CallbackQuery, state: FSMContext):
 
 @router.message(SmartNStates.waiting_for_smart_n)
 async def process_smart_n(message: Message, state: FSMContext):
-    """Обробка введеного N"""
     if message.from_user.id != ADMIN_ID:
         return
     
@@ -105,7 +99,6 @@ async def process_smart_n(message: Message, state: FSMContext):
         )
 
 def get_mode_name(mode: str) -> str:
-    """Назва режиму"""
     names = {
         "sequential": "🔢 Послідовно",
         "random": "🎲 Випадково",
