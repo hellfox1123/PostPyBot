@@ -14,10 +14,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def send_admin_notification(bot: Bot, message: str):
+async def send_admin_notification(bot: Bot, message: str, parse_mode: str = None):
     """Надіслати сповіщення адміну"""
     try:
-        await bot.send_message(ADMIN_ID, message)
+        await bot.send_message(
+            ADMIN_ID, 
+            message, 
+            parse_mode=parse_mode
+        )
     except Exception as e:
         logger.error(f"Помилка відправки сповіщення адміну: {e}")
 
