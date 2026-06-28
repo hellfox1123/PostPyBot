@@ -9,8 +9,9 @@ from aiogram.enums import ParseMode
 from config import BOT_TOKEN, DATABASE_PATH
 from database import db
 from telegram_client import telegram_client
+import scheduler as scheduler_module  # <-- ЗМІНЕНО
 from scheduler import Scheduler
-import poster as poster_module
+import poster as poster_module        # <-- ЗМІНЕНО
 from poster import Poster
 from handlers import start, interval, caption, mode, schedule, service, actions, auth
 from utils import logger, send_admin_notification
@@ -19,31 +20,24 @@ from utils import logger, send_admin_notification
 async def main():
     """Головна функція"""
     
-    # Створюємо директорію для бази
     os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
-    
-    # Ініціалізуємо базу даних
     await db.init()
     logger.info("База даних ініціалізована")
     
-    # Створюємо бота
     bot = Bot(
         token=BOT_TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
     
-    # Ініціалізуємо Telethon клієнт
     is_authorized = await telegram_client.init(bot)
     
-    # Ініціалізуємо Poster і зберігаємо в модуль
+    # Правильно зберігаємо Poster в модуль
     poster_module.poster = Poster(bot)
     logger.info("Poster ініціалізовано")
     
-    # Створюємо диспетчер
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
     
-    # Реєструємо роутери
     dp.include_router(auth.router)
     dp.include_router(start.router)
     dp.include_router(interval.router)
@@ -53,12 +47,12 @@ async def main():
     dp.include_router(service.router)
     dp.include_router(actions.router)
     
-    # Створюємо планувальник
-    global scheduler
-    scheduler = Scheduler(bot)
+    # Правильно зберігаємо Scheduler в модуль
+    scheduler_module.scheduler = Scheduler(bot)
+    logger.info("Scheduler ініціалізовано")
     
     if is_authorized:
-        await scheduler.start()
+        await scheduler_module.scheduler.start()
         logger.info("✅ Бот запущено і готовий до роботи")
         await send_admin_notification(
             bot,
@@ -75,12 +69,11 @@ async def main():
             parse_mode="HTML"
         )
     
-    # Запускаємо polling
     try:
         await dp.start_polling(bot)
     finally:
         if is_authorized:
-            await scheduler.stop()
+            await scheduler_module.scheduler.stop()
         await telegram_client.disconnect()
         await bot.session.close()
 
