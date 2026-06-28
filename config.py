@@ -6,9 +6,9 @@ load_dotenv()
 # Telegram Bot
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# Telegram API - офіційні credentials від Telegram Desktop
-API_ID = 2040  # Офіційний API_ID від Telegram Desktop
-API_HASH = "b18441a1ff607e10a989891a54620ff1"  # Офіційний API_HASH
+# Telegram API - ТВОЇ КЛЮЧІ з my.telegram.org
+API_ID = 20145164  # ← твій api_id
+API_HASH = 'cb587ee5271bde0c92bb783b23eafa99'  # ← твій api_hash
 
 # IDs
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
