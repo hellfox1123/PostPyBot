@@ -1,73 +1,36 @@
-import asyncio
-import os
-from telethon import TelegramClient
-from telethon.errors import SessionPasswordNeededError
-from config import API_ID, API_HASH, SESSION_PATH, ADMIN_ID
-from utils import logger
-
-class TelegramUserClient:
-    def __init__(self):
-        self.client = None
-        self.auth_pending = False
-        self.phone_hash = None
-        self.phone = None
-        self.bot = None
-    
     async def init(self, bot=None):
-        """Ініціалізація клієнта"""
+        """Ініціалізація клієнта з детальною діагностикою"""
         self.bot = bot
         
-        # Детальне логування
-        logger.info(f"=== ДІАГНОСТИКА ФАЙЛУ СЕСІЇ ===")
-        logger.info(f"SESSION_PATH з config: {SESSION_PATH}")
-        logger.info(f"Поточна робоча директорія: {os.getcwd()}")
-        
-        # Перевіряємо різні можливі шляхи
-        possible_paths = [
-            f"{SESSION_PATH}.session",
-            f"/app/{SESSION_PATH}.session",
-            f"/app/data/telegram_session.session",
-            "data/telegram_session.session",
-            "telegram_session.session"
-        ]
-        
-        for path in possible_paths:
-            if os.path.exists(path):
-                file_size = os.path.getsize(path)
-                logger.info(f"✅ ФАЙЛ ЗНАЙДЕНО: {path} ({file_size} байт)")
-            else:
-                logger.info(f"❌ Не знайдено: {path}")
-        
-        # Перевіряємо вміст /app/data/
-        if os.path.exists("/app/data"):
-            logger.info(f"Вміст /app/data/: {os.listdir('/app/data')}")
-        else:
-            logger.warning("Папка /app/data/ не існує")
-        
-        # Перевіряємо /app/
-        if os.path.exists("/app"):
-            logger.info(f"Вміст /app/: {os.listdir('/app')}")
-        
-        # Використовуємо SESSION_PATH
         session_file = f"{SESSION_PATH}.session"
-        logger.info(f"Використовую шлях: {session_file}")
+        logger.info(f"=== ДІАГНОСТИКА ===")
+        logger.info(f"API_ID: {API_ID}")
+        logger.info(f"API_HASH: {API_HASH[:10]}...")
+        logger.info(f"SESSION_PATH: {SESSION_PATH}")
+        logger.info(f"Файл: {session_file}")
+        
+        if not os.path.exists(session_file):
+            logger.error(f"❌ Файл НЕ знайдено!")
+            return False
+        
+        file_size = os.path.getsize(session_file)
+        logger.info(f"✅ Файл знайдено ({file_size} байт)")
         
         self.client = TelegramClient(SESSION_PATH, API_ID, API_HASH)
         
         try:
             await self.client.connect()
+            logger.info("✅ Підключено до Telegram серверів")
             
-            if await self.client.is_user_authorized():
-                logger.info("✅ Telethon клієнт авторизовано")
+            # Спробуємо отримати дані користувача
+            try:
+                me = await self.client.get_me()
+                logger.info(f"✅ АВТОРИЗОВАНО як @{me.username} (ID: {me.id})")
                 return True
-            else:
-                logger.warning("❌ Telethon клієнт не авторизовано")
+            except Exception as auth_error:
+                logger.error(f"❌ Сесія невалідна: {type(auth_error).__name__}: {auth_error}")
                 return False
         
         except Exception as e:
-            logger.error(f"Помилка ініціалізації Telethon: {e}")
+            logger.error(f"❌ Помилка підключення: {type(e).__name__}: {e}")
             return False
-    
-    # ... решта методів без змін ...
-
-telegram_client = TelegramUserClient()
