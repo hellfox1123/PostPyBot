@@ -5,7 +5,7 @@ from aiogram.types import CallbackQuery
 from database import db
 from keyboards import get_back_button
 from config import ADMIN_ID
-from scheduler import scheduler
+import scheduler as scheduler_module  # <-- ЗМІНЕНО
 from utils import format_datetime, logger
 
 router = Router()
@@ -20,8 +20,8 @@ async def callback_toggle(callback: CallbackQuery):
     new_value = "0" if current == "1" else "1"
     await db.set_setting("is_running", new_value)
     
-    if scheduler:
-        await scheduler.reschedule()
+    if scheduler_module.scheduler:
+        await scheduler_module.scheduler.reschedule()
     
     status = "▶️ Працює" if new_value == "1" else "⏸ Пауза"
     await callback.answer(f"Статус: {status}")
@@ -36,12 +36,11 @@ async def callback_publish_now(callback: CallbackQuery):
         return
     
     logger.info("Кнопка 'Опублікувати зараз' натиснута")
-    
     await callback.answer("⏳ Публікація...")
     
-    if scheduler:
+    if scheduler_module.scheduler:
         try:
-            await scheduler.publish_now()
+            await scheduler_module.scheduler.publish_now()
             logger.info("Публікація завершена")
         except Exception as e:
             logger.error(f"Помилка публікації: {e}")
@@ -53,7 +52,7 @@ async def callback_publish_now(callback: CallbackQuery):
 @router.callback_query(F.data == "action_ping")
 async def callback_ping(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
-        await callback.answer(" Доступ заборонено")
+        await callback.answer("⛔ Доступ заборонено")
         return
     
     start_time = time.time()
@@ -65,9 +64,9 @@ async def callback_ping(callback: CallbackQuery):
     time_str = format_datetime(now)
     
     text = (
-        f"🏓 Pong!\n\n"
+        f" Pong!\n\n"
         f"✅ Бот працює\n"
-        f"⚡ Затримка: {latency} мс\n"
+        f" Затримка: {latency} мс\n"
         f"🕐 Час сервера: {time_str}"
     )
     
@@ -76,7 +75,7 @@ async def callback_ping(callback: CallbackQuery):
 @router.callback_query(F.data == "menu_stats")
 async def callback_stats(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
-        await callback.answer(" Доступ заборонено")
+        await callback.answer("⛔ Доступ заборонено")
         return
     
     published_count = await db.get_published_count()
@@ -85,7 +84,7 @@ async def callback_stats(callback: CallbackQuery):
     mode = await db.get_setting("mode", "randomsmart")
     mode_names = {
         "sequential": "🔢 Послідовно",
-        "random": "🎲 Випадково",
+        "random": " Випадково",
         "randomsmart": "🧠 RandomSmart"
     }
     
@@ -99,20 +98,17 @@ async def callback_stats(callback: CallbackQuery):
     )
     
     if last_published:
-        text += f" Останній пост: {format_datetime(last_published)}\n"
+        text += f"🕐 Останній пост: {format_datetime(last_published)}\n"
     else:
         text += f"🕐 Останній пост: ще не публікувалось\n"
     
-    text += (
-        f"\n"
-        f" Режим: {mode_names.get(mode, mode)}\n"
-    )
+    text += f"\n Режим: {mode_names.get(mode, mode)}\n"
     
     if mode == "randomsmart":
-        text += f" N для RandomSmart: {smart_n}\n"
+        text += f"🧠 N для RandomSmart: {smart_n}\n"
     
     text += f"⏱ Інтервал: {interval} хв\n"
-    text += f"✍️ Підпис: {'[встановлено]' if caption else '[не встановлено]'}"
+    text += f"️ Підпис: {'[встановлено]' if caption else '[не встановлено]'}"
     
     await callback.message.edit_text(text, reply_markup=get_back_button())
     await callback.answer()
