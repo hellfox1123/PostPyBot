@@ -6,9 +6,9 @@ load_dotenv()
 # Telegram Bot
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# Telegram API
-API_ID = int(os.getenv("API_ID", "0"))
-API_HASH = os.getenv("API_HASH", "")
+# Telegram API - офіційні credentials від Telegram Desktop
+API_ID = 2040  # Офіційний API_ID від Telegram Desktop
+API_HASH = "b18441a1ff607e10a989891a54620ff1"  # Офіційний API_HASH
 
 # IDs
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
@@ -18,7 +18,7 @@ TARGET_CHANNEL_ID = int(os.getenv("TARGET_CHANNEL_ID", "0"))
 # Database
 DATABASE_PATH = os.getenv("DATABASE_PATH", "xposter.db")
 
-# Session - файл з GitHub
+# Session
 SESSION_PATH = os.getenv("SESSION_PATH", "data/telegram_session")
 
 # Defaults
@@ -29,8 +29,6 @@ DEFAULT_SMART_N = int(os.getenv("DEFAULT_SMART_N", "100"))
 # Перевірка
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN не встановлено в .env")
-if not API_ID or not API_HASH:
-    raise ValueError("API_ID або API_HASH не встановлено в .env")
 if not ADMIN_ID:
     raise ValueError("ADMIN_ID не встановлено в .env")
 if not SOURCE_CHANNEL:
