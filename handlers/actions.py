@@ -6,7 +6,7 @@ from database import db
 from keyboards import get_back_button
 from config import ADMIN_ID
 from scheduler import scheduler
-from utils import format_datetime
+from utils import format_datetime, logger
 
 router = Router()
 
@@ -32,21 +32,28 @@ async def callback_toggle(callback: CallbackQuery):
 @router.callback_query(F.data == "action_publish_now")
 async def callback_publish_now(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
-        await callback.answer(" Доступ заборонено")
+        await callback.answer("⛔ Доступ заборонено")
         return
+    
+    logger.info("Кнопка 'Опублікувати зараз' натиснута")
     
     await callback.answer("⏳ Публікація...")
     
     if scheduler:
-        await scheduler.publish_now()
-        await callback.answer("✅ Пост опубліковано")
+        try:
+            await scheduler.publish_now()
+            logger.info("Публікація завершена")
+        except Exception as e:
+            logger.error(f"Помилка публікації: {e}")
+            await callback.message.answer(f"❌ Помилка: {e}")
     else:
-        await callback.answer("❌ Планувальник не ініціалізовано")
+        logger.error("Планувальник не ініціалізовано")
+        await callback.message.answer("❌ Планувальник не ініціалізовано")
 
 @router.callback_query(F.data == "action_ping")
 async def callback_ping(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
-        await callback.answer("⛔ Доступ заборонено")
+        await callback.answer(" Доступ заборонено")
         return
     
     start_time = time.time()
@@ -69,7 +76,7 @@ async def callback_ping(callback: CallbackQuery):
 @router.callback_query(F.data == "menu_stats")
 async def callback_stats(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
-        await callback.answer("⛔ Доступ заборонено")
+        await callback.answer(" Доступ заборонено")
         return
     
     published_count = await db.get_published_count()
@@ -92,20 +99,20 @@ async def callback_stats(callback: CallbackQuery):
     )
     
     if last_published:
-        text += f"🕐 Останній пост: {format_datetime(last_published)}\n"
+        text += f" Останній пост: {format_datetime(last_published)}\n"
     else:
         text += f"🕐 Останній пост: ще не публікувалось\n"
     
     text += (
         f"\n"
-        f"🎛 Режим: {mode_names.get(mode, mode)}\n"
+        f" Режим: {mode_names.get(mode, mode)}\n"
     )
     
     if mode == "randomsmart":
-        text += f"🧠 N для RandomSmart: {smart_n}\n"
+        text += f" N для RandomSmart: {smart_n}\n"
     
     text += f"⏱ Інтервал: {interval} хв\n"
-    text += f"️ Підпис: {'[встановлено]' if caption else '[не встановлено]'}"
+    text += f"✍️ Підпис: {'[встановлено]' if caption else '[не встановлено]'}"
     
     await callback.message.edit_text(text, reply_markup=get_back_button())
     await callback.answer()
