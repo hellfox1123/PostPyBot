@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import base64
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
@@ -14,11 +15,61 @@ from poster import Poster
 from handlers import start, interval, caption, mode, schedule, service, actions, auth
 from utils import logger, send_admin_notification
 
+
+def restore_session_from_variables():
+    """Відновлення сесії з Railway Variables (розбита на частини)"""
+    # Збираємо сесію з кількох змінних SESSION_DATA_1, SESSION_DATA_2, ...
+    session_chunks = []
+    i = 1
+    while True:
+        chunk = os.getenv(f"SESSION_DATA_{i}", "")
+        if not chunk:
+            break
+        session_chunks.append(chunk)
+        i += 1
+    
+    if not session_chunks:
+        logger.warning("⚠️ SESSION_DATA змінні не знайдено в Railway Variables")
+        return False
+    
+    try:
+        session_base64 = "".join(session_chunks)
+        session_bytes = base64.b64decode(session_base64)
+        
+        # Шлях до файлу сесії
+        session_dir = os.path.dirname(DATABASE_PATH)
+        session_file = os.path.join(session_dir, "telegram_session.session")
+        os.makedirs(session_dir, exist_ok=True)
+        
+        # Перевіряємо чи файл вже актуальний
+        if os.path.exists(session_file):
+            with open(session_file, 'rb') as f:
+                existing_data = f.read()
+            if existing_data == session_bytes:
+                logger.info("✅ Сесія вже актуальна (не треба оновлювати)")
+                return True
+        
+        # Зберігаємо нову сесію
+        with open(session_file, 'wb') as f:
+            f.write(session_bytes)
+        
+        logger.info(f"✅ Сесію відновлено з Railway Variables ({len(session_bytes)} байт)")
+        return True
+    
+    except Exception as e:
+        logger.error(f"❌ Помилка відновлення сесії: {e}")
+        return False
+
+
 async def main():
     """Головна функція"""
     
     # Створюємо директорію для бази якщо її немає
     os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
+    
+    # Відновлюємо сесію з Railway Variables
+    logger.info("=== ВІДНОВЛЕННЯ СЕСІЇ ===")
+    session_restored = restore_session_from_variables()
     
     # Ініціалізуємо базу даних
     await db.init()
@@ -69,7 +120,8 @@ async def main():
         await send_admin_notification(
             bot,
             "⚠️ <b>Telethon не авторизовано!</b>\n\n"
-            "Використайте команду /auth для авторизації.",
+            "Сесія невалідна або відсутня.\n\n"
+            "Перевірте SESSION_DATA в Railway Variables.",
             parse_mode="HTML"
         )
     
@@ -81,6 +133,7 @@ async def main():
             await scheduler.stop()
         await telegram_client.disconnect()
         await bot.session.close()
+
 
 if __name__ == "__main__":
     try:
